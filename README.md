@@ -1,19 +1,9 @@
-## Advanced Lane Finding
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+##Writeup Template
+###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
-
-In this project, your goal is to write a software pipeline to identify the lane boundaries in a video, but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-Creating a great writeup:
 ---
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
 
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
+**Advanced Lane Finding Project**
 
 The goals / steps of this project are the following:
 
@@ -26,8 +16,110 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-The images for camera calibration are stored in the folder called `camera_cal`.  The images in `test_images` are for testing your pipeline on single frames.  To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `ouput_images`, and include a description in your writeup for the project of what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+[//]: # (Image References)
 
-The `challenge_video.mp4` video is an extra (and optional) challenge for you if you want to test your pipeline under somewhat trickier conditions.  The `harder_challenge.mp4` video is another optional challenge and is brutal!
+[image1]: ./output_images/chessboard_undistort.png "Chessboard Calibration"
+[image2]: ./output_images/road_distortion_calibration.png "Road Calibration"
+[image3]: ./output_images/thresholded_binary_image.png "Threholded Binary Example"
+[image4]: ./output_images/warpped_image.png "Warped Image Example"
 
-If you're feeling ambitious (again, totally optional though), don't stop there!  We encourage you to go out and take video of your own, calibrate your camera and show us how you would implement this project from scratch!
+[image5]: ./output_images/laneline_fitted.png "Fit Visual"
+[image6]: ./output_images/annotated_image.png "Annonated Image"
+[video1]: ./project_video.mp4 "Fit Visual"
+
+## [Rubric](https://review.udacity.com/#!/rubrics/476/view) Points
+###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+
+---
+
+###Camera Calibration
+
+####1. Compute the camera calibration using chessboard images. 
+#####p4.ipynb Section 1
+
+I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
+
+####2. Apply a distortion correction to raw chessboard images.
+#####p4.ipynb Section 2-1
+
+I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
+
+![alt text][image1]
+
+###Pipeline (single images)
+
+####1. Apply a distortion correction to each raw roard image.
+#####p4.ipynb Section 2-2
+Again `objpoints` and `imgpoints` that were previously computed when calibratin the camera is used to perform distortion correction to each raw images.
+
+To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
+![alt text][image2]
+
+####2. Use color transforms, gradients, etc., to create a thresholded binary image.
+#####p4.ipynb Section 3 (thresholded_img class)
+The imgage is then put through a pipeline to create a thresholded binary image. Basically s channel from hls space and Red channle from RGB colour space is used to identify lane lines; h channel is also used in conjunction as a filter to take out shadow pixles. To create a threholded binary each of these chanel is also fed through Sobel threshold algorithm to identify, 
+ - x-axis gradient
+ - y-axis gradient
+ - absolue gradient gradient
+ - directional gradient. 
+ 
+A combined result of the differnet gradient scheme on each channel returns a output binary imiage as the follow example,
+
+![alt text][image3]
+
+####3. Apply a perspective transform to rectify binary image ("birds-eye view")
+#####p4.ipynb Section 2 `thresholded_img.warp_img()` ; p4.ipynb Section 4
+The code for warping the image is implemented also into the `thresholded_img` class called `warp_img()`. The  function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+
+| Source        | Destination   | 
+|:-------------:|:-------------:| 
+| 540, 470      | 200, 0        | 
+| 750, 470      | 1080, 0      |
+| 1130, 690     | 1080, 720      |
+| 200, 690      | 200, 720        |
+
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+
+![alt text][image4]
+
+####4. Detect lane pixels and fit to find the lane boundary and fitted with a polynomial.
+#####p4.ipynb Section 5
+From the warpped image I could divide the lane line points into left and right lane line points. Then I fitted 2nd order polynomial to each lane line using `numpy.polyfit()` function. For example, 
+
+![alt text][image5]
+
+####5. Determine the curvature of the lane and vehicle position with respect to center and warp the detected lane boundaries back onto the original image.
+#####p4.ipynb Section 6,7 `anonate_img`
+Using the fitted 2nd order polynomial parameters, the lane can be drawn and warp back to the original undistorted image. At the same time vehicle position and curvature of the lane can be found.
+![alt text][image6]
+
+---
+
+###Pipeline (video)
+
+####1. Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position
+#####p4.ipynb Section 6,8
+
+A few extra features are added to the image processing pipeline to improve the performance of the video processing pipeline:
+ - Dynamically selection for region of interest selection if lane lines were successflly found previously
+     - `set_dynimic_region_vertices()`
+ - Dynamically tighten region of interest again after first identifying the lane line poinst. This help reduces the possibility of identify noise as lane line points. 
+     - `dynamic_tighten_region()`
+ - Runtime averaging of a few lane line fitting polynomial constants. 
+     - `set_leftfit()` and `set_rightfit()`
+
+![Final Result Gif] (./result.mp4)
+
+---
+##Discussion
+
+My general approach is to process the image as best as I could then apply it to the video. While processing the video a few extra features are also added to increase the performance. It is relatively easy to process images/videos where road condition is nice and clean. However, when it comes to shadows, road material change or cases where background road colour is relative light, the pipeline does not work as well.
+
+
+There are still lots of places where the pipeline can be improved. Following are just a few ideas that could imporve the pipeline:
+ - Explore different colour space
+ - Parameter tuning.
+ - Explore different way of removing pixel noise or low pass filtering. Maybe even something in the laplacian space
+ - Implement a better weighted average for polynomial constant smoothing/averaging. Possibly something similar to a PID control scheme.
+
+

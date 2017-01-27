@@ -1,5 +1,3 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
 ---
 
@@ -26,9 +24,6 @@ The goals / steps of this project are the following:
 [image5]: ./output_images/laneline_fitted.png "Fit Visual"
 [image6]: ./output_images/annotated_image.png "Annonated Image"
 [video1]: ./project_video.mp4 "Fit Visual"
-
-## [Rubric](https://review.udacity.com/#!/rubrics/476/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
 

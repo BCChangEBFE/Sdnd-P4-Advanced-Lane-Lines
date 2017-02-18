@@ -52,7 +52,7 @@ To demonstrate this step, I will describe how I apply the distortion correction 
 
 ####2. Use color transforms, gradients, etc., to create a thresholded binary image.
 #####p4.ipynb Section 3 (thresholded_img class)
-The imgage is then put through a pipeline to create a thresholded binary image. Basically s channel from hls space and Red channle from RGB colour space is used to identify lane lines; h channel is also used in conjunction as a filter to take out shadow pixles. To create a threholded binary each of these chanel is also fed through Sobel threshold algorithm to identify, 
+The imgage is then put through a pipeline to create a thresholded binary image. Basically Y channel from YCrCb space is used for detecting white line and the Cb channel is used for yellow line detection; h channel is also used in conjunction as a filter to take out shadow pixles. To create a threholded binary each of these chanel is also fed through Sobel threshold algorithm to identify, 
  - x-axis gradient
  - y-axis gradient
  - absolue gradient gradient
